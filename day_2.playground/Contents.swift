@@ -14,38 +14,50 @@ var lines: [String.SubSequence]?  = fileContents?.split(separator: "\n")
 
 //lines  = ["abcdef","bababc", "abbcde", "abcccd", "abcdd", "abcdee", "ababab"]
 
+//lines = ["abcde",
+//    "fghij",
+//    "klmno",
+//    "pqrst",
+//    "fguij",
+//    "axcye",
+//    "wvxyz"
+//]
+
 extension String {
     func customCount(of needle: Character) -> Int {
         return reduce(0) {
             $1 == needle ? $0 + 1 : $0
         }
     }
-}
-
-var lettersTwiceCounter = 0
-var lettersThreeTimesCounter = 0
-
-if let x = lines {
-    for line in x {
-        var lettersTwice = false
-        var lettersThreeTimes = false
-        for char in line {
-            let occurences: Int = String(line).customCount(of: char)
-            if(occurences == 2) {
-                lettersTwice = true
-            } else if (occurences == 3) {
-                lettersThreeTimes = true
+    
+    func differByOne(with other: String) -> Bool {
+        var differCounter = 0
+        for i in 0..<count {
+            let index = self.index(self.startIndex, offsetBy: i)
+            if(self[index] != other[index]) {
+                differCounter += 1
+            }
+            
+            if(differCounter > 1) {
+                return false
             }
         }
         
-        if(lettersTwice) {
-            lettersTwiceCounter += 1
-        }
-        if(lettersThreeTimes) {
-            lettersThreeTimesCounter  += 1
-        }
+        return true
     }
 }
 
-print(lettersTwiceCounter * lettersThreeTimesCounter)
+if let x = lines {
+    var seenIDs: Set<String> = []
+    for line in x {
+        let id = String(line)
+        for seenID in seenIDs {
+            if(id.differByOne(with: seenID)) {
+                print("Differ by one \(id) and \(seenID)")
+                break
+            }
+        }
+        seenIDs.insert(id)
+    }
+}
 
