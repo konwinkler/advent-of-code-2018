@@ -11,7 +11,7 @@ extension Date: Strideable {
     }
 }
 
-let testFileUrl = playgroundSharedDataDirectory.appendingPathComponent("input_4_example.txt")
+let testFileUrl = playgroundSharedDataDirectory.appendingPathComponent("input_4.txt")
 
 var fileContents: String?
 do {
@@ -33,6 +33,9 @@ dateFormatter.dateFormat = dateFormat
 var schedule: [String: Set<Date>] = [:]
 var currentGuard: String = "no guard"
 var lastSleep: Date?
+
+var actions: [Date:String] = [:]
+
 for line in lines! {
     print(line)
     let stateChange = String(line).split( whereSeparator: {
@@ -42,29 +45,35 @@ for line in lines! {
     print(stateChange)
     let timestamp = dateFormatter.date(from: String(stateChange[0]))
     print(dateFormatter.string(from: timestamp!))
-
+    
     let action = String(stateChange[1])
+
+    actions[timestamp!] = action
+}
+let sortedActions = actions.keys.sorted()
+
+for actionTime in sortedActions {
+    let action = actions[actionTime]!
+    
     if(action.range(of: "Guard") != nil) {
         currentGuard = action
         if(schedule[currentGuard] == nil) {
             schedule[currentGuard] = []
         }
     }
-    print(currentGuard)
     
     if(action.range(of: "asleep") != nil) {
-        lastSleep = timestamp!
+        lastSleep = actionTime
     }
     
     if(action.range(of: "wakes up") != nil) {
-        let wakeTime = timestamp!.addingTimeInterval(-60)
+        let wakeTime = actionTime.addingTimeInterval(-60)
         for time in lastSleep!...wakeTime {
-            print(dateFormatter.string(from: time))
             schedule[currentGuard]?.insert(time)
         }
     }
 }
-print(schedule)
+
 
 var mostSleep = 0
 var mostSleepGuard = ""
