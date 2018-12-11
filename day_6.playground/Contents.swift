@@ -1,6 +1,20 @@
 import Foundation
 import PlaygroundSupport
 
+struct Point {
+    var x: Int
+    var y: Int
+    
+    init(_ x: Int, _ y: Int) {
+        self.x = x
+        self.y = y
+    }
+    
+    func distance(_ other: Point) -> Int {
+        return (abs(x - other.x) + abs(y - other.y))
+    }
+}
+
 struct Coordinate {
     var closestPoint: Int
 }
@@ -9,10 +23,10 @@ struct Grid {
     var coordinates: [[Coordinate]]
 }
 
-func closestDistance(_ coordinate: (Int, Int), _ points: [(Int, Int)]) -> Int {
+func closestDistance(_ coordinate: Point, _ points: [Point]) -> Int {
     // calculate manhattan distance to every point
     let distances: [Int] = points.map({
-        distance($0, coordinate)
+        return coordinate.distance($0)
     })
     
     var shortestDistance = Int.max
@@ -29,10 +43,6 @@ func closestDistance(_ coordinate: (Int, Int), _ points: [(Int, Int)]) -> Int {
     return closestPoint
 }
 
-func distance(_ a: (Int, Int), _ b: (Int, Int)) -> Int {
-    return (abs(a.0 - b.0) + abs(a.1 - b.1))
-}
-
 let testFileUrl = playgroundSharedDataDirectory.appendingPathComponent("input_6.txt")
 
 var fileContents: String?
@@ -45,27 +55,33 @@ do {
 let lines: [String.SubSequence]?  = fileContents?.split(separator: "\n")
 
 // parse point coordinates
-let coordindates: [(Int, Int)] = lines!.map({
+let coordindates: [Point] = lines!.map({
     let numbers = String($0).components(separatedBy: ", ")
-    return (Int(numbers[0])!, Int(numbers[1])!)
+    return Point(Int(numbers[0])!, Int(numbers[1])!)
 })
 print(coordindates)
 
 // construct grid (find largest coordinates)
-var largestCoordinates = coordindates.reduce((0, 0), {
-    (max($0.0, $1.0), max($1.1, $1.1))
+var smallestCoordinate = coordindates.reduce(Point(Int.max, Int.max), {
+    Point(min($0.x, $1.x), min($0.y, $1.y))
 })
-largestCoordinates = (largestCoordinates.0 + 2, largestCoordinates.1 + 2)
+smallestCoordinate = Point(smallestCoordinate.x - 1, smallestCoordinate.y - 1)
+print("smallest coordinate \(smallestCoordinate)")
 
-print(largestCoordinates)
-var arr = Array(repeating: Array(repeating: Coordinate(closestPoint: -1), count: largestCoordinates.1), count: largestCoordinates.0)
+var largestCoordinate = coordindates.reduce(Point(Int.min, Int.min), {
+    Point(max($0.x, $1.x), max($0.y, $1.y))
+})
+largestCoordinate = Point(largestCoordinate.x + 2, largestCoordinate.y + 2)
+print("largest coordinate \(largestCoordinate)")
+
+var arr = Array(repeating: Array(repeating: Coordinate(closestPoint: -1), count: largestCoordinate.y), count: largestCoordinate.x)
 var grid = Grid(coordinates: arr)
 
 // calculate each coordinate distance to closest point
-for (xIndex, x) in grid.coordinates.enumerated() {
-    for (yIndex, _) in x.enumerated() {
-        grid.coordinates[xIndex][yIndex] = Coordinate(closestPoint: closestDistance((xIndex, yIndex), coordindates))
-//        print("\(xIndex) \(yIndex) \(grid.coordinates[xIndex][yIndex].closestPoint)")
+for x in smallestCoordinate.x..<largestCoordinate.x {
+    for y in smallestCoordinate.y..<largestCoordinate.y {
+        grid.coordinates[x][y] = Coordinate(closestPoint: closestDistance(Point(x, y), coordindates))
+        //        print("\(xIndex) \(yIndex) \(grid.coordinates[xIndex][yIndex].closestPoint)")
     }
 }
 
@@ -94,7 +110,7 @@ print(sortedKeys)
 func foundOnEdge(_ key: Int, _ map: Grid) -> Bool {
     for (xIndex, x) in map.coordinates.enumerated() {
         for (yIndex, y) in x.enumerated() {
-            if(xIndex == 0 || yIndex == 0 || xIndex == largestCoordinates.0 - 1 || yIndex == largestCoordinates.1 - 1) {
+            if(xIndex == smallestCoordinate.x - 1 || yIndex == smallestCoordinate.y - 1 || xIndex == largestCoordinate.x - 1 || yIndex == largestCoordinate.y - 1) {
                 if(key == y.closestPoint) { // key is on the edge
                     return true
                 }
@@ -112,5 +128,3 @@ for key in sortedKeys {
         break
     }
 }
-
-// print number of occurence for point
