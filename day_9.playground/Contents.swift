@@ -1,5 +1,5 @@
 import Foundation
-import PlaygroundSupport
+//import PlaygroundSupport
 
 func getInput(_ index: Int) -> String {
     let inputs = [
@@ -9,7 +9,7 @@ func getInput(_ index: Int) -> String {
         "17 players; last marble is worth 1104 points",
         "21 players; last marble is worth 6111 points",
         "30 players; last marble is worth 5807 points",
-        "426 players; last marble is worth 72058 points"]
+        "426 players; last marble is worth 7205800 points"]
     return inputs[index]
 }
 
@@ -140,4 +140,5 @@ for marble in 1..<(lastMarble + 1) {
 
 print(circle.mostPoints())
 
-
+// swiftc -o day_9 ./Contents.swift
+// ./day_9
