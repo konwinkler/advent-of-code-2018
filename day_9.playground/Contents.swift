@@ -13,59 +13,109 @@ func getInput(_ index: Int) -> String {
     return inputs[index]
 }
 
+class Marble: Equatable, CustomDebugStringConvertible {
+    
+    static func == (lhs: Marble, rhs: Marble) -> Bool {
+        return lhs.value == rhs.value
+    }
+    
+    let value: Int
+    var next: Marble?
+    var previous: Marble?
+    
+    init(_ value: Int) {
+        self.value = value
+    }
+    
+    var debugDescription: String {
+        return "[\(value) p \(previous?.value ?? -1) n \(next?.value ?? -1)]"
+    }
+}
+
 class MarbleCirle: CustomDebugStringConvertible {
     let amountPlayers: Int
     var playerScores: [Int]
     var currentPlayerIndex = -1
+    var zeroMarble = Marble(0)
+    
+    var currentMarble: Marble = Marble(-1)
     
     init(_ amountPlayers: Int) {
+        currentMarble = zeroMarble
+//        print("Marble \(currentMarble)")
         self.amountPlayers = amountPlayers
-        self.playerScores = Array(repeating: 0, count: self.amountPlayers)
+        playerScores = Array(repeating: 0, count: self.amountPlayers)
+        currentMarble.previous = currentMarble
+        currentMarble.next = currentMarble
+        print("filled \(currentMarble)")
     }
     
     var debugDescription: String {
         var description = "[\(self.currentPlayerIndex + 1)]"
-        for (index, element) in marbles.enumerated() {
-            if(index == currentMarbleIndex) {
-                description += " (\(element))"
+        
+        var marble = zeroMarble
+        if(marble == currentMarble) {
+            description += " (\(marble.value))"
+        } else {
+            description += " \(marble.value)"
+        }
+        while (marble.next! != zeroMarble) {
+            marble = marble.next!
+            if(marble == currentMarble) {
+                description += " (\(marble.value))"
             } else {
-                description += " \(element)"
+                description += " \(marble.value)"
             }
         }
+
         return description
     }
     
-    var marbles: [Int] = [0]
-    var currentMarbleIndex = 0
-    
     func insertMarble(_ marbleNumber: Int) -> () {
-//        print("insert \(marbleNumber) at \(self.currentMarbleIndex + 2) % \(self.marbles.count + 1)")
-        self.currentMarbleIndex = (self.currentMarbleIndex + 2) % (self.marbles.count)
-        if(self.currentMarbleIndex == 0) {
-            marbles.append(marbleNumber)
-            self.currentMarbleIndex = self.marbles.count - 1
-        } else {
-            marbles.insert(marbleNumber, at: currentMarbleIndex)
+        // move twice ahead and insert marble
+        let newMarble = Marble(marbleNumber)
+        
+        currentMarble = currentMarble.next!
+        currentMarble = currentMarble.next!
+        
+        newMarble.previous = currentMarble.previous
+        newMarble.next = currentMarble
+//        print("insert \(newMarble) between \(currentMarble.previous!) and \(currentMarble.next!)")
+
+        newMarble.previous?.next = newMarble
+        newMarble.next?.previous = newMarble
+        if(marbleNumber == 1) {
+            currentMarble.previous = newMarble
         }
+//        print("old marble \(currentMarble)")
+        
+        currentMarble = newMarble
         
         self.currentPlayerIndex = (self.currentPlayerIndex + 1) % self.amountPlayers
     }
     
     func collectPoint(_ marbleNumber: Int) -> () {
-        self.currentMarbleIndex = self.currentMarbleIndex - 7
-        if(self.currentMarbleIndex < 0) {
-            self.currentMarbleIndex = self.currentMarbleIndex + self.marbles.count
-        }
-//        print("collect points at \(self.currentMarbleIndex)")
-        var additionalScore = self.marbles.remove(at: self.currentMarbleIndex)
+        
+        // move 7 times forward and remove marble
+        currentMarble = currentMarble.previous!
+        currentMarble = currentMarble.previous!
+        currentMarble = currentMarble.previous!
+        currentMarble = currentMarble.previous!
+        currentMarble = currentMarble.previous!
+        currentMarble = currentMarble.previous!
+        currentMarble = currentMarble.previous!
+        
+        let marbleToRemove = currentMarble
+        
+        var additionalScore = currentMarble.value
+        currentMarble = currentMarble.next!
+        currentMarble.previous = marbleToRemove.previous!
+        marbleToRemove.previous!.next = currentMarble
+
         additionalScore += marbleNumber
         self.playerScores[self.currentPlayerIndex] = self.playerScores[self.currentPlayerIndex] + additionalScore
         
         self.currentPlayerIndex = (self.currentPlayerIndex + 1) % self.amountPlayers
-    }
-    
-    func currentMarble() -> Int {
-        return self.marbles[self.currentMarbleIndex]
     }
     
     func mostPoints() -> Int {
@@ -73,24 +123,21 @@ class MarbleCirle: CustomDebugStringConvertible {
     }
 }
 
-func main() -> () {
-    let input = getInput(0).split(separator: " ")
-    let numberOfPlayers: Int = Int(input[0])!
-    let lastMarble: Int = Int(input[6])!
-    
-    var circle: MarbleCirle = MarbleCirle(numberOfPlayers)
-    print(circle)
-    for marble in 1..<(lastMarble + 1) {
-        if(marble % 23 == 0) {
-            circle.collectPoint(marble)
-        } else {
-            circle.insertMarble(marble)
-        }
-//        print(circle)
-    }
+let input = getInput(6).split(separator: " ")
+let numberOfPlayers: Int = Int(input[0])!
+let lastMarble: Int = Int(input[6])!
 
-    print(circle.mostPoints())
+let circle: MarbleCirle = MarbleCirle(numberOfPlayers)
+print(circle)
+for marble in 1..<(lastMarble + 1) {
+    if(marble % 23 == 0) {
+        circle.collectPoint(marble)
+    } else {
+        circle.insertMarble(marble)
+    }
+//    print(circle)
 }
 
-main()
+print(circle.mostPoints())
+
 
